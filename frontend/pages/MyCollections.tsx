@@ -5,245 +5,209 @@ import { MODULE_ADDRESS } from "@/constants";
 import { aptosClient } from "@/utils/aptosClient";
 import { InputViewFunctionData } from "@aptos-labs/ts-sdk";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
-import { Form, Input, message, Table, Tag, Typography } from "antd";
-import "dotenv/config";
+import { Input, message, Table, Tag, Typography } from "antd";
 import { useEffect, useState } from "react";
 const { Column } = Table;
 const { Paragraph } = Typography;
 
-interface LostItem {
-  title: string;
-  description: string;
-  reward: number;
-  is_claimed: boolean;
-  owner: string;
-  finders: {
-    description: string;
-    finder: string;
-    is_verified: boolean;
-  }[];
-  unique_id: number;
-}
-
 export function MyCollections() {
-  const { account, signAndSubmitTransaction } = useWallet();
-  const [itemById, setItemById] = useState<LostItem | null>(null);
-  const [itemID, setItemID] = useState<number | null>(null);
-  const [items, setItems] = useState<LostItem[]>([]);
-  const [itemFoundBy, setItemFoundBy] = useState<LostItem[]>([]);
+  const { account } = useWallet();
+  const [willID, setWillID] = useState<string>("");
+
+  const [willDataBy, setWillDataBy] = useState<Will[]>([]);
+  const [willDataByID, setWillDataByID] = useState<Will | null>(null);
+  const [willData, setWillData] = useState<Will[]>([]);
+
+  interface Beneficiary {
+    beneficiary_address: string;
+    percentage: number;
+  }
+
+  interface Will {
+    id: string;
+    testator: string;
+    total_assets: string;
+    is_executed: boolean;
+    beneficiaries: Beneficiary[];
+  }
 
   const convertAmountFromOnChainToHumanReadable = (value: number, decimal: number) => {
     return value / Math.pow(10, decimal);
   };
 
-  const handleRequestClaim = async (values: { unique_id: number; description: string }) => {
+  const fetchAllWillsBy = async () => {
     try {
-      const transaction = await signAndSubmitTransaction({
-        sender: account?.address,
-        data: {
-          function: `${MODULE_ADDRESS}::LostAndFoundRegistry::register_found_item`,
-          functionArguments: [values.unique_id, values.description],
-        },
-      });
+      const walletAddress = await account?.address;
+      const payload: InputViewFunctionData = {
+        function: `${MODULE_ADDRESS}::DigitalWillSystem::view_wills_by_testator`,
+        functionArguments: [walletAddress],
+      };
 
-      await aptosClient().waitForTransaction({ transactionHash: transaction.hash });
-      message.success("Listed Your Findings!");
-      fetchAllItemsFoundBy();
-      fetchAllItems();
-    } catch (error) {
-      if (typeof error === "object" && error !== null && "code" in error && (error as { code: number }).code === 4001) {
-        message.error("Transaction rejected by user.");
+      const result = await aptosClient().view({ payload });
+      const itemList = result[0] as {
+        id: string;
+        testator: string;
+        total_assets: string;
+        is_executed: boolean;
+        beneficiaries: { beneficiary_address: string; percentage: number }[];
+      }[];
+
+      if (Array.isArray(itemList)) {
+        const wills: Will[] = itemList.map(
+          (item): Will => ({
+            id: item.id,
+            testator: item.testator,
+            total_assets: item.total_assets,
+            is_executed: item.is_executed,
+            beneficiaries: item.beneficiaries.map(
+              (b: { beneficiary_address: string; percentage: number }): Beneficiary => ({
+                beneficiary_address: b.beneficiary_address,
+                percentage: b.percentage,
+              }),
+            ),
+          }),
+        );
+        setWillDataBy(wills);
       } else {
-        if (error instanceof Error) {
-          console.error(`Transaction failed: ${error.message}`);
-        } else {
-          console.error("Transaction failed: Unknown error");
-        }
-        console.error("Transaction Error:", error);
+        setWillDataBy([]);
       }
-      console.log("Error Registering Finding.", error);
+    } catch (error) {
+      console.error("Failed to get Will by address:", error);
     }
   };
-
-  const fetchAllItems = async () => {
+  // Fetch all wills on the platform
+  const fetchAllWills = async () => {
     try {
       const payload: InputViewFunctionData = {
-        function: `${MODULE_ADDRESS}::LostAndFoundRegistry::view_all_items`,
+        function: `${MODULE_ADDRESS}::DigitalWillSystem::view_all_wills`,
         functionArguments: [],
       };
 
       const result = await aptosClient().view({ payload });
-
-      const itemList = result[0] as LostItem[];
+      const itemList = result[0] as {
+        id: string;
+        testator: string;
+        total_assets: string;
+        is_executed: boolean;
+        beneficiaries: { beneficiary_address: string; percentage: number }[];
+      }[];
 
       if (Array.isArray(itemList)) {
-        setItems(
-          itemList.map((item) => ({
-            title: item.title,
-            description: item.description,
-            reward: item.reward,
-            is_claimed: item.is_claimed,
-            owner: item.owner,
-            finders: item.finders.map((finder) => ({
-              description: finder.description,
-              finder: finder.finder,
-              is_verified: finder.is_verified,
-            })),
-            unique_id: item.unique_id,
-          })),
+        const wills: Will[] = itemList.map(
+          (item): Will => ({
+            id: item.id,
+            testator: item.testator,
+            total_assets: item.total_assets,
+            is_executed: item.is_executed,
+            beneficiaries: item.beneficiaries.map(
+              (b: { beneficiary_address: string; percentage: number }): Beneficiary => ({
+                beneficiary_address: b.beneficiary_address,
+                percentage: b.percentage,
+              }),
+            ),
+          }),
         );
+        setWillData(wills);
       } else {
-        setItems([]);
+        setWillData([]);
       }
-      fetchAllItemsFoundBy();
     } catch (error) {
-      console.error("Failed to get Policies by address:", error);
+      console.error("Failed to get all wills:", error);
     }
   };
+
   const handleFetchItemById = () => {
-    if (itemID !== null) {
-      fetchItemById(itemID);
+    if (willID !== "") {
+      fetchWillByID(Number(willID));
     } else {
       message.error("Please enter a valid ID.");
     }
   };
 
-  const fetchItemById = async (unique_id: number) => {
+  // Fetch a will by ID
+  const fetchWillByID = async (unique_id: number) => {
     try {
       const payload: InputViewFunctionData = {
-        function: `${MODULE_ADDRESS}::LostAndFoundRegistry::view_item_by_id`,
+        function: `${MODULE_ADDRESS}::DigitalWillSystem::view_will_by_id`,
         functionArguments: [unique_id],
       };
-      const result = await aptosClient().view({ payload });
-      const fetchedJob = result[0] as LostItem;
-      setItemById(fetchedJob);
-      fetchAllItemsFoundBy();
-    } catch (error) {
-      console.error("Failed to fetch Policy by id:", error);
-    }
-  };
 
-  const fetchAllItemsFoundBy = async () => {
-    try {
-      const WalletAddr = account?.address;
-      const payload: InputViewFunctionData = {
-        function: `${MODULE_ADDRESS}::LostAndFoundRegistry::view_items_found_by_finder`,
-        functionArguments: [WalletAddr],
+      const result = await aptosClient().view({ payload });
+      const itemList = result[0] as {
+        id: string;
+        testator: string;
+        total_assets: string;
+        is_executed: boolean;
+        beneficiaries: { beneficiary_address: string; percentage: number }[];
       };
 
-      const result = await aptosClient().view({ payload });
-
-      const itemList = result[0] as LostItem[];
-
-      if (Array.isArray(itemList)) {
-        setItemFoundBy(
-          itemList.map((item) => ({
-            title: item.title,
-            description: item.description,
-            reward: item.reward,
-            is_claimed: item.is_claimed,
-            owner: item.owner,
-            finders: item.finders.map((finder) => ({
-              description: finder.description,
-              finder: finder.finder,
-              is_verified: finder.is_verified,
-            })),
-            unique_id: item.unique_id,
-          })),
-        );
+      if (itemList) {
+        const will: Will = {
+          id: itemList.id,
+          testator: itemList.testator,
+          total_assets: itemList.total_assets,
+          is_executed: itemList.is_executed,
+          beneficiaries: itemList.beneficiaries.map(
+            (b: { beneficiary_address: string; percentage: number }): Beneficiary => ({
+              beneficiary_address: b.beneficiary_address,
+              percentage: b.percentage,
+            }),
+          ),
+        };
+        setWillDataByID(will);
       } else {
-        setItemFoundBy([]);
+        setWillDataByID(null);
       }
-      fetchAllItems();
     } catch (error) {
-      console.error("Failed to get Policies by address:", error);
+      console.error("Failed to fetch Will by ID:", error);
     }
   };
-
   useEffect(() => {
-    fetchAllItems();
-    fetchAllItemsFoundBy();
+    fetchAllWills();
+    fetchAllWillsBy();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, items]);
+  }, [account, willID]);
 
   return (
     <>
-      <LaunchpadHeader title="All Lost Items" />
+      <LaunchpadHeader title="All Wills" />
       <div className="flex flex-col items-center justify-center px-4 py-2 gap-4 max-w-screen-xl mx-auto">
         <div className="w-full flex flex-col gap-y-4">
+          {/* Table to display all wills */}
           <Card>
             <CardHeader>
-              <CardDescription>All Available Items</CardDescription>
+              <CardDescription>All Available Wills</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table dataSource={items} rowKey="" className="max-w-screen-xl mx-auto">
-                <Column title="ID" dataIndex="unique_id" />
-                <Column title="Title" dataIndex="title" />
+              <Table dataSource={willData} rowKey="id" className="max-w-screen-xl mx-auto">
+                <Column title="ID" dataIndex="id" />
                 <Column
-                  title="Reward"
-                  dataIndex="reward"
+                  title="Assets"
+                  dataIndex="total_assets"
                   render={(reward: number) => convertAmountFromOnChainToHumanReadable(reward, 8)}
                 />
-                <Column title="Owner" dataIndex="owner" render={(owner: string) => owner.substring(0, 6)} />
+                <Column title="Owner" dataIndex="testator" render={(owner: string) => owner.substring(0, 12)} />
                 <Column
-                  title="Description"
-                  dataIndex="description"
-                  responsive={["md"]}
-                  render={(creator: string) => creator.substring(0, 300)}
+                  title="Is Executed"
+                  dataIndex="is_executed"
+                  render={(is_executed: boolean) => (is_executed ? "Yes" : "No")}
                 />
               </Table>
             </CardContent>
           </Card>
 
+          {/* Fetch a will by ID */}
           <Card>
             <CardHeader>
-              <CardDescription>List Your Findings</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form
-                onFinish={handleRequestClaim}
-                labelCol={{
-                  span: 4.04,
-                }}
-                wrapperCol={{
-                  span: 100,
-                }}
-                layout="horizontal"
-                style={{
-                  maxWidth: 1000,
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "0.5rem",
-                  padding: "1.7rem",
-                }}
-              >
-                <Form.Item label="Item ID" name="unique_id" rules={[{ required: true }]}>
-                  <Input placeholder="eg. 1001" />
-                </Form.Item>
-
-                <Form.Item label="Description" name="description" rules={[{ required: true }]}>
-                  <Input placeholder="eg. Describe your Findings. how where did you find and how you would return!" />
-                </Form.Item>
-
-                <Form.Item>
-                  <Button variant="submit" size="lg" className="text-base w-full" type="submit">
-                    List Findings
-                  </Button>
-                </Form.Item>
-              </Form>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardDescription>View Item By ID</CardDescription>
+              <CardDescription>View Will By ID</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="p-2">
                 <Input
-                  placeholder="Enter Item ID"
+                  placeholder="Enter Will ID"
                   type="number"
-                  value={itemID || ""}
-                  onChange={(e) => setItemID(Number(e.target.value))}
+                  value={willID}
+                  onChange={(e) => setWillID(e.target.value)}
                   style={{ marginBottom: 16 }}
                 />
                 <Button
@@ -253,59 +217,74 @@ export function MyCollections() {
                   className="text-base w-full"
                   type="submit"
                 >
-                  Fetch Policy
+                  Fetch Will
                 </Button>
-                {itemById && (
-                  <Card key={itemById.unique_id} className="mb-6 shadow-lg p-4">
-                    <p className="text-sm text-gray-500 mb-4">Policy ID: {itemById.unique_id}</p>
-                    <Card key={itemById.unique_id} className="mb-6 shadow-lg p-4">
-                      <p className="text-sm text-gray-500 mb-4">Policy ID: {itemById.unique_id}</p>
-                      <Card style={{ marginTop: 16, padding: 16 }}>
-                        {itemById && (
-                          <div>
-                            <Paragraph>
-                              <strong>Title:</strong> {itemById.title}
-                            </Paragraph>
-                            <Paragraph>
-                              <strong>Creator:</strong> <Tag>{itemById.owner}</Tag>
-                            </Paragraph>
-                            <Paragraph>
-                              <strong>Reward:</strong>{" "}
-                              <Tag>{convertAmountFromOnChainToHumanReadable(itemById.reward, 8)}</Tag>
-                            </Paragraph>
-
-                            <Paragraph>
-                              <strong>Description:</strong> {itemById.description}
-                            </Paragraph>
-
-                            <Paragraph>
-                              <strong>Claimed:</strong> <Tag>{itemById.is_claimed ? "Yes" : "No"}</Tag>
-                            </Paragraph>
-
-                            {itemById.finders.length > 0 ? (
-                              <Card style={{ marginTop: 16, padding: 16 }}>
-                                {itemById.finders.map((customer, idx) => (
-                                  <div key={idx} className="mb-4">
-                                    <Paragraph>
-                                      <strong>Finder:</strong> <Tag>{customer.finder}</Tag>
-                                    </Paragraph>
-                                    <Paragraph>
-                                      <strong>Verified:</strong> <Tag>{customer.is_verified ? "Yes" : "No"}</Tag>
-                                    </Paragraph>
-                                    <Paragraph>
-                                      <strong>description:</strong> {customer.description}
-                                    </Paragraph>
-                                  </div>
-                                ))}
-                              </Card>
-                            ) : (
-                              <Paragraph>No Finders Found for this Items. </Paragraph>
-                            )}
-                          </div>
-                        )}
-                      </Card>
-                    </Card>
+                {willDataByID ? (
+                  <Card className="mb-6 shadow-lg p-4">
+                    <Paragraph className="text-sm text-gray-500 mb-4">Will ID: {willDataByID.id}</Paragraph>
+                    <Paragraph>
+                      <strong>Testator:</strong> <Tag>{willDataByID.testator}</Tag>
+                    </Paragraph>
+                    <Paragraph>
+                      <strong>Total Assets:</strong>{" "}
+                      {convertAmountFromOnChainToHumanReadable(Number(willDataByID.total_assets), 8)} APT
+                    </Paragraph>
+                    <Paragraph>
+                      <strong>Executed:</strong> <Tag>{willDataByID.is_executed ? "Yes" : "No"}</Tag>
+                    </Paragraph>
+                    <h2 className="text-xl font-semibold mb-4">Beneficiaries</h2>
+                    {willDataByID.beneficiaries.map((beneficiary, index) => (
+                      <div key={index} className="mb-4">
+                        <Paragraph>
+                          <strong>Address:</strong> {beneficiary.beneficiary_address}
+                        </Paragraph>
+                        <Paragraph>
+                          <strong>Percentage:</strong> {beneficiary.percentage} %
+                        </Paragraph>
+                      </div>
+                    ))}
                   </Card>
+                ) : (
+                  <Paragraph>No Will Data Found.</Paragraph>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Your Will (based on account) */}
+          <Card>
+            <CardHeader>
+              <CardDescription>Your Will</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="p-2">
+                {willDataBy && willDataBy.length > 0 ? (
+                  <Card className="mb-6 shadow-lg p-4">
+                    <Paragraph className="text-sm text-gray-500 mb-4">Will ID: {willDataBy[0].id}</Paragraph>
+                    <Paragraph>
+                      <strong>Testator:</strong> <Tag>{willDataBy[0].testator}</Tag>
+                    </Paragraph>
+                    <Paragraph>
+                      <strong>Total Assets:</strong>{" "}
+                      {convertAmountFromOnChainToHumanReadable(Number(willDataBy[0].total_assets), 8)} APT
+                    </Paragraph>
+                    <Paragraph>
+                      <strong>Executed:</strong> <Tag>{willDataBy[0].is_executed ? "Yes" : "No"}</Tag>
+                    </Paragraph>
+                    <h2 className="text-xl font-semibold mb-4">Beneficiaries</h2>
+                    {willDataBy[0].beneficiaries.map((beneficiary, index) => (
+                      <div key={index} className="mb-4">
+                        <Paragraph>
+                          <strong>Address:</strong> {beneficiary.beneficiary_address}
+                        </Paragraph>
+                        <Paragraph>
+                          <strong>Percentage:</strong> {beneficiary.percentage} %
+                        </Paragraph>
+                      </div>
+                    ))}
+                  </Card>
+                ) : (
+                  <Paragraph>No Will Data Found.</Paragraph>
                 )}
               </div>
             </CardContent>
@@ -313,116 +292,34 @@ export function MyCollections() {
 
           <Card>
             <CardHeader>
-              <CardDescription>Get Items Found By You</CardDescription>
+              <CardDescription>All Wills on Platform</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="p-2">
-                {itemFoundBy.map((policy, index) => (
-                  <Card key={index} className="mb-6 shadow-lg p-4">
-                    <p className="text-sm text-gray-500 mb-4">Policy ID: {policy.unique_id}</p>
-                    <Card style={{ marginTop: 16, padding: 16 }}>
-                      {policy && (
-                        <div>
-                          <Paragraph>
-                            <strong>Title:</strong> {policy.title}
-                          </Paragraph>
-                          <Paragraph>
-                            <strong>Creator:</strong> <Tag>{policy.owner}</Tag>
-                          </Paragraph>
-                          <Paragraph>
-                            <strong>Reward:</strong>{" "}
-                            <Tag>{convertAmountFromOnChainToHumanReadable(policy.reward, 8)}</Tag>
-                          </Paragraph>
-
-                          <Paragraph>
-                            <strong>Description:</strong> {policy.description}
-                          </Paragraph>
-
-                          <Paragraph>
-                            <strong>Claimed:</strong> <Tag>{policy.is_claimed ? "Yes" : "No"}</Tag>
-                          </Paragraph>
-
-                          {policy.finders.length > 0 ? (
-                            <Card style={{ marginTop: 16, padding: 16 }}>
-                              {policy.finders.map((customer, idx) => (
-                                <div key={idx} className="mb-4">
-                                  <Paragraph>
-                                    <strong>Finder:</strong> <Tag>{customer.finder}</Tag>
-                                  </Paragraph>
-                                  <Paragraph>
-                                    <strong>Verified:</strong> <Tag>{customer.is_verified ? "Yes" : "No"}</Tag>
-                                  </Paragraph>
-                                  <Paragraph>
-                                    <strong>description:</strong> {customer.description}
-                                  </Paragraph>
-                                </div>
-                              ))}
-                            </Card>
-                          ) : (
-                            <Paragraph>No Customers Found for this Policy. </Paragraph>
-                          )}
-                        </div>
-                      )}
-                    </Card>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardDescription>All Items on Platform</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="p-2">
-                {items.map((policy, index) => (
-                  <Card key={index} className="mb-6 shadow-lg p-4">
-                    <p className="text-sm text-gray-500 mb-4">Policy ID: {policy.unique_id}</p>
-                    <Card style={{ marginTop: 16, padding: 16 }}>
-                      {policy && (
-                        <div>
-                          <Paragraph>
-                            <strong>Title:</strong> {policy.title}
-                          </Paragraph>
-                          <Paragraph>
-                            <strong>Creator:</strong> <Tag>{policy.owner}</Tag>
-                          </Paragraph>
-                          <Paragraph>
-                            <strong>Reward:</strong>{" "}
-                            <Tag>{convertAmountFromOnChainToHumanReadable(policy.reward, 8)}</Tag>
-                          </Paragraph>
-
-                          <Paragraph>
-                            <strong>Description:</strong> {policy.description}
-                          </Paragraph>
-
-                          <Paragraph>
-                            <strong>Claimed:</strong> <Tag>{policy.is_claimed ? "Yes" : "No"}</Tag>
-                          </Paragraph>
-
-                          {policy.finders.length > 0 ? (
-                            <Card style={{ marginTop: 16, padding: 16 }}>
-                              {policy.finders.map((customer, idx) => (
-                                <div key={idx} className="mb-4">
-                                  <Paragraph>
-                                    <strong>Finder:</strong> <Tag>{customer.finder}</Tag>
-                                  </Paragraph>
-                                  <Paragraph>
-                                    <strong>Verified:</strong> <Tag>{customer.is_verified ? "Yes" : "No"}</Tag>
-                                  </Paragraph>
-                                  <Paragraph>
-                                    <strong>description:</strong> {customer.description}
-                                  </Paragraph>
-                                </div>
-                              ))}
-                            </Card>
-                          ) : (
-                            <Paragraph>No Customers Found for this Policy. </Paragraph>
-                          )}
-                        </div>
-                      )}
-                    </Card>
+                {willData.map((will) => (
+                  <Card key={will.id} className="mb-6 shadow-lg p-4">
+                    <Paragraph className="text-sm text-gray-500 mb-4">Will ID: {will.id}</Paragraph>
+                    <Paragraph>
+                      <strong>Testator:</strong> <Tag>{will.testator}</Tag>
+                    </Paragraph>
+                    <Paragraph>
+                      <strong>Total Assets:</strong>{" "}
+                      {convertAmountFromOnChainToHumanReadable(Number(will.total_assets), 8)} APT
+                    </Paragraph>
+                    <Paragraph>
+                      <strong>Executed:</strong> <Tag>{will.is_executed ? "Yes" : "No"}</Tag>
+                    </Paragraph>
+                    <h2 className="text-xl font-semibold mb-4">Beneficiaries</h2>
+                    {will.beneficiaries.map((beneficiary, index) => (
+                      <div key={index} className="mb-4">
+                        <Paragraph>
+                          <strong>Address:</strong> {beneficiary.beneficiary_address}
+                        </Paragraph>
+                        <Paragraph>
+                          <strong>Percentage:</strong> {beneficiary.percentage} %
+                        </Paragraph>
+                      </div>
+                    ))}
                   </Card>
                 ))}
               </div>
