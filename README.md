@@ -1,15 +1,14 @@
-# Lost and Found Registry - Frontend
+# Digital Will System - Frontend
 
-This is the frontend for the **Lost and Found Registry** built on the **Aptos Blockchain**. The platform enables users to register lost items, submit found item reports, and manage claims of lost property. All interactions are handled securely through smart contracts on the Aptos blockchain.
+This is the frontend for the **Digital Will System** built on the **Aptos Blockchain**. The platform enables users to create, update, revoke, and execute digital wills, with beneficiaries receiving allocated assets after execution. All transactions are securely processed through smart contracts on the Aptos blockchain.
 
 ## Key Features
 
-- **Register Lost Items**: Users can register their lost items with descriptions and set a reward for finders.
-- **Submit Found Items**: Finders can submit found items with a description for verification.
-- **Verify Finders**: Item owners can verify finders and transfer rewards for successfully returned items.
-- **View Lost Items**: Users can browse all registered lost items.
-- **View Found Item Submissions**: Owners can view submissions from finders for specific lost items.
-- **Manage Claims**: Item owners can track the status of their lost items and verify claims.
+- **Create a Will**: Users can create a will by specifying beneficiaries and asset percentages.
+- **Update Will**: Users can modify existing wills, adjusting beneficiaries and assets as needed.
+- **Revoke Will**: Users can revoke an existing will, removing it from the system.
+- **Execute Will**: Wills are executed after the user's death, transferring assets to beneficiaries.
+- **View Wills**: Users can view all wills or specific wills based on testator or will ID.
 
 ## Prerequisites
 
@@ -26,7 +25,7 @@ Before running the project, ensure you have the following installed:
 First, clone the project repository to your local machine:
 
 ```bash
-cd lost-and-found-registry
+cd digital-will-system
 ```
 
 ### 2. Install Dependencies
@@ -48,7 +47,7 @@ yarn install
 You need to configure the environment variables for the frontend to interact with the Aptos blockchain. Create a `.env` file in the project root and add the following variables:
 
 ```bash
-PROJECT_NAME=LostAndFoundRegistry
+PROJECT_NAME=DigitalWillSystem
 VITE_APP_NETWORK=testnet
 VITE_MODULE_ADDRESS=0x<your_contract_address>
 ```
@@ -75,36 +74,44 @@ The app will be available at `http://localhost:5173`.
 
 ### 1. Connect Wallet
 
-Upon opening the application, you'll be prompted to connect your Aptos wallet (e.g., Petra Wallet). This allows you to interact with the blockchain and perform operations like registering lost items and verifying found submissions.
+Upon opening the application, you'll be prompted to connect your Aptos wallet (e.g., Petra Wallet). This allows you to interact with the blockchain and perform operations like creating, updating, or executing wills.
 
-### 2. Register a Lost Item
+### 2. Create a Will
 
-To register a lost item:
+To create a will:
 
-- Navigate to the **Register Lost Item** page.
-- Fill in the item's title, description, and reward amount.
-- Submit the form to register your lost item on the blockchain.
+- Navigate to the **Create Will** page.
+- Provide the list of beneficiaries, their respective asset percentages, and the total asset amount.
+- Submit the form to store your will on the blockchain.
 
-### 3. Submit Found Item
+### 3. Update a Will
 
-Finders can submit found items by:
+To update an existing will:
 
-- Navigating to the **Submit Found Item** page.
-- Selecting the lost item from the list and providing a description of the found item.
-- Submitting the form to notify the owner of the found item.
+- Go to the **Update Will** section.
+- Select the will you want to update by providing its ID.
+- Adjust the beneficiaries, percentages, or total assets as required, then submit the form.
 
-### 4. Verify Finder and Transfer Reward
+### 4. Revoke a Will
 
-As the owner of a lost item:
+To revoke a will:
 
-- Go to the **My Items** section and select the item with a found submission.
-- Review the finder's submission and verify if it's accurate.
-- Upon verification, the platform will automatically transfer the reward to the finder using Aptos tokens (APT).
+- Navigate to the **Revoke Will** page.
+- Enter the ID of the will to be revoked.
+- Confirm the revocation, and the will will be removed from the system.
 
-### 5. View Lost and Found Items
+### 5. Execute a Will
 
-- Browse all registered lost items via the **View Lost Items** section.
-- View all submissions for a specific lost item in the **Found Submissions** section.
+To execute a will:
+
+- As the executor, go to the **Execute Will** page.
+- Provide the ID of the will you want to execute.
+- Upon execution, the assets will be automatically distributed to the beneficiaries based on the will's terms.
+
+### 6. View Wills
+
+- Browse all wills via the **View Wills** section.
+- View specific wills by testator or will ID.
 
 ## Scripts
 
@@ -124,4 +131,4 @@ The project uses the following key dependencies:
 
 ## Conclusion
 
-This frontend allows users to easily interact with the **Lost and Found Registry**, providing a decentralized way to manage lost item registration, found item submissions, and reward distribution. With a secure and transparent system powered by the Aptos blockchain, users can seamlessly track and resolve lost-and-found claims.
+This frontend provides a decentralized way to manage digital wills, allowing users to create, update, revoke, and execute wills with secure and transparent asset distribution using the Aptos blockchain. The platform ensures that beneficiaries receive their designated assets according to the testator's wishes.

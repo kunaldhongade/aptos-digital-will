@@ -1,117 +1,125 @@
-# Lost and Found Registry Smart Contract
+# Digital Will System - Smart Contract
 
-## Overview
+The **Digital Will System** is a decentralized solution that allows users to create, update, revoke, and execute digital wills using smart contracts on the **Aptos Blockchain**. Each will specifies beneficiaries and their respective shares of the assets, and the assets are distributed upon execution.
 
-The **LostAndFoundRegistry** smart contract is designed to facilitate a decentralized registry for lost items. It allows owners to register lost items, finders to submit found item claims, and owners to verify finders and reward them in the form of Aptos tokens (APT). The contract also maintains a registry of all items and finders' submissions, ensuring transparency and immutability.
+## Features
 
-### Key Functionalities:
+- **Create Will**: Users can create a will specifying beneficiaries and their percentage of the total assets.
+- **Update Will**: Users can update an existing will to modify beneficiaries or asset allocation.
+- **Revoke Will**: A will can be revoked by the testator at any time.
+- **Execute Will**: Upon death verification, the will can be executed, and the specified assets will be distributed to the beneficiaries.
+- **View Wills**: Functionality to view all wills, wills by specific testators, or a particular will by its ID.
 
-- **Register Lost Items:** Owners can register lost items with details such as title, description, and reward.
-- **Submit Found Items:** Finders can register their discovery of lost items with relevant descriptions.
-- **Verify Finders:** Owners can verify a finder’s claim and transfer the promised reward if the claim is valid.
-- **View Items and Finders:** Users can view all registered lost items and finders, as well as query specific items by their unique IDs.
+## Key Data Structures
 
----
-
-## Table of Contents
-
-1. [Initialization](#initialization)
-2. [Key Functions](#key-functions)
-3. [Views](#views)
-4. [Error Codes](#error-codes)
-
----
-
-## Initialization
-
-Before the contract can be used, the registry must be initialized.
-
-- **Function:** `init_registry(account: &signer)`
-  - Initializes the global lost items registry. Can only be called once.
-  - Moves the item registry to the system address, ensuring a global reference point.
-
----
-
-## Key Functions
-
-### 1. Register Lost Item
-
-Owners can register lost items to the registry.
-
-- **Function:** `register_lost_item(account: &signer, title: String, description: String, reward: u64)`
-  - Registers a lost item with a unique ID.
-  - `reward` specifies the amount (in APT) to reward a verified finder.
-
-### 2. Register Found Item
-
-Finders can register their claim of finding a lost item.
-
-- **Function:** `register_found_item(account: &signer, unique_id: u64, description: String)`
-  - Registers a finder’s submission for a specific item.
-  - Multiple finders can submit claims for the same item.
-
-### 3. Verify Finder
-
-Owners can verify a finder’s claim and reward them for finding the item.
-
-- **Function:** `verify_finder(account: &signer, unique_id: u64, finder_address: address)`
-  - Only the owner of the item can verify and reward the finder.
-  - Transfers the reward to the verified finder.
-  - Marks the item as "claimed" and finalizes the process.
-
----
-
-## Views
-
-### 1. View All Items
-
-View all lost items currently registered in the system.
-
-- **Function:** `view_all_items()`
-  - Returns a list of all lost items.
-
-### 2. View Item by ID
-
-Retrieve details of a specific lost item by its unique ID.
-
-- **Function:** `view_item_by_id(unique_id: u64)`
-  - Returns the details of the lost item with the given ID.
-
-### 3. View Finders for an Item
-
-Retrieve all finders who submitted claims for a specific item.
-
-- **Function:** `view_finders_by_item(unique_id: u64)`
-  - Returns a list of finders for the specified item.
-
-### 4. View Items by Owner
-
-Retrieve all items registered by a specific owner.
-
-- **Function:** `view_items_by_owner(owner: address)`
-  - Returns all items owned by the specified address.
-
-### 5. View Items Found by a Finder
-
-Retrieve all items a specific finder has registered as found.
-
-- **Function:** `view_items_found_by_finder(finder: address)`
-  - Returns all items found by the specified address.
-
----
+- **`Beneficiary`**: Represents a beneficiary of the will with an address and a percentage of the assets.
+- **`Will`**: Contains details of the will including the testator's address, total assets, a list of beneficiaries, and a flag indicating whether the will has been executed.
+- **`GlobalWillCollection`**: Stores all the wills created and manages the global collection.
 
 ## Error Codes
 
-- **ERR_ITEM_NOT_FOUND (1):** The specified item does not exist.
-- **ERR_ITEM_ALREADY_CLAIMED (2):** The item has already been claimed by a finder.
-- **ERR_NOT_OWNER (3):** The caller is not the owner of the item.
-- **ERR_NOT_FINDER (4):** The finder is not registered for this item.
-- **ERR_NO_ACTIVE_ITEMS (5):** No active items are registered in the system.
-- **ERR_ALREADY_VERIFIED (6):** The finder has already been verified.
-- **ERR_ALREADY_INITIALIZED (7):** The registry has already been initialized.
+- **`ERR_WILL_NOT_FOUND` (1)**: Triggered if the requested will does not exist.
+- **`ERR_UNAUTHORIZED` (2)**: Raised if an unauthorized user tries to modify or execute a will.
+- **`ERR_NO_WILLS` (3)**: Raised when no wills are found in the system.
+- **`ERR_WILL_ALREADY_EXECUTED` (4)**: Triggered if an attempt is made to execute a will that has already been executed.
+- **`ERR_INVALID_PERCENTAGE` (5)**: Raised if the total percentage of beneficiaries doesn't sum to 100%.
+- **`ERR_ALREADY_INITIALIZED` (6)**: Raised if the global will system is already initialized.
 
----
+## Functions
+
+### 1. `init_will_system`
+
+Initializes the global will system. This function is only called once to set up the global structure.
+
+```move
+public entry fun init_will_system(account: &signer)
+```
+
+### 2. `create_will`
+
+Creates a new will by specifying the list of beneficiaries and the allocation percentages. The total assets are transferred from the user's account.
+
+```move
+public entry fun create_will(
+    account: &signer,
+    beneficiary_addresses: vector<address>,
+    beneficiary_percentages: vector<u64>,
+    total_assets: u64
+)
+```
+
+### 3. `update_will`
+
+Allows the testator to update an existing will by changing beneficiaries, their percentages, or the total assets.
+
+```move
+public entry fun update_will(
+    account: &signer,
+    will_id: u64,
+    beneficiary_addresses: vector<address>,
+    beneficiary_percentages: vector<u64>,
+    total_assets: u64
+)
+```
+
+### 4. `revoke_will`
+
+Revokes an existing will, effectively removing it from the global collection.
+
+```move
+public entry fun revoke_will(
+    account: &signer,
+    will_id: u64
+)
+```
+
+### 5. `execute_will`
+
+Executes the will and transfers the specified assets to the beneficiaries. This function can only be called if the will has not been executed yet.
+
+```move
+public entry fun execute_will(
+    account: &signer,
+    will_id: u64
+)
+```
+
+### 6. `view_all_wills`
+
+Allows viewing all the wills created on the platform.
+
+```move
+public fun view_all_wills(): vector<Will>
+```
+
+### 7. `view_will_by_id`
+
+Returns details of a specific will by its ID.
+
+```move
+public fun view_will_by_id(will_id: u64): Will
+```
+
+### 8. `view_wills_by_testator`
+
+Retrieves all wills created by a specific testator.
+
+```move
+public fun view_wills_by_testator(testator: address): vector<Will>
+```
+
+## Helper Functions
+
+- **`sum_percentages`**: Calculates the total percentage assigned to all beneficiaries to ensure it sums to 100.
+- **`create_beneficiaries`**: Helper function to create a list of beneficiaries from the given addresses and percentages.
+
+## Setup and Deployment
+
+1. **Initialize the Will System**: Call `init_will_system()` to set up the global storage for all wills.
+2. **Create Will**: Use the `create_will()` function to create new wills with beneficiaries and asset allocation.
+3. **Update or Revoke**: Wills can be updated or revoked at any time by the testator using the respective functions.
+4. **Execute Will**: Upon death or verified trigger, the will can be executed, and assets will be distributed.
 
 ## Conclusion
 
-This smart contract enables a decentralized, transparent system for managing lost and found items, rewarding finders using Aptos tokens. It provides flexibility for item owners and finders to interact seamlessly, while ensuring accountability through verified claims and on-chain transactions.
+The **Digital Will System** ensures a secure and transparent way to manage digital assets after death. It leverages smart contracts to automate the distribution of assets based on predefined conditions, ensuring that beneficiaries receive their rightful share.
