@@ -34,19 +34,19 @@ export const LaunchpadHeader: FC<LaunchpadHeaderProps> = ({ title }) => {
           >
             Home
           </Link>
-          {location.pathname === "/list-findings" ? (
+          {location.pathname === "/view-wills" ? (
             <Link
               className={`${buttonVariants({ variant: "link" })} w-24 text-center`} // Fixed width with center alignment
-              to={"/register-item"}
+              to={"/create-will"}
             >
-              Register Lost Item
+              Create Will
             </Link>
           ) : (
             <Link
               className={`${buttonVariants({ variant: "link" })} w-24 text-center`} // Fixed width with center alignment
-              to={"/list-findings"}
+              to={"/view-wills"}
             >
-              Finder
+              View Wills
             </Link>
           )}
           <div className="flex-shrink-0">

@@ -15,7 +15,7 @@ export function Header() {
         {/* Header Title */}
         <Title level={screens.xs ? 3 : screens.sm ? 2 : 1} className="m-0">
           <Link to="/" style={{ fontFamily: "unset", color: "inherit" }}>
-            Aptos Finder Platform
+            Aptos Digital Will Platform
           </Link>
         </Title>
       </Col>
@@ -27,13 +27,13 @@ export function Header() {
             className={`${buttonVariants({ variant: "link" })} w-24 text-center`} // Fixed width with center alignment
             to={"/create-will"}
           >
-            Register Lost Item
+            Create Will
           </Link>
           <Link
             className={`${buttonVariants({ variant: "link" })} w-24 text-center`} // Fixed width with center alignment
-            to={"/list-findings"}
+            to={"/view-wills"}
           >
-            Finder
+            View Wills
           </Link>
           <div className="flex-shrink-0">
             <WalletSelector />
