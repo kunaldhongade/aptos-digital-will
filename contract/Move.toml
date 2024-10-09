@@ -1,0 +1,11 @@
+[package]
+name = "DigitalWillSystem"
+version = "0.0.0"
+
+[dependencies]
+AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework", rev = "mainnet" }
+
+[addresses]
+my_addrx = "7792db2bc2e3c11f4485060e1112fab7a9d88d971af5cc638a9a486d6fb7ca61"
+sys_addrx="0xca10b0176c34f9a8315589ff977645e04497814e9753d21f7d7e7c3d83aa7b57"
+std = "0x1"
