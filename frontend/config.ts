@@ -5,23 +5,23 @@ import Placeholder3 from "@/assets/placeholders/bear-3.png";
 export const config: Config = {
   // Removing one or all of these socials will remove them from the page
   socials: {
-    twitter: "https://twitter.com/kunaldhongade",
-    discord: "https://discord.com",
-    homepage: "https://kunaldhongade.vercel.app",
+    twitter: "https://twitter.com/projecthandle",
+    discord: "https://discord.com/projectdiscord",
+    homepage: "https://projectwebsite.com",
   },
 
   defaultCollection: {
-    name: "Digital Will Collection",
-    description: "A unique collection of digital assets, each with its own story and legacy.",
+    name: "Legacy Vault Collection",
+    description: "A unique collection of digital legacies, each representing a timeless story.",
     image: Placeholder1,
   },
 
   ourStory: {
     title: "Our Story",
-    subTitle: "Innovative Digital Will Platform on Aptos",
+    subTitle: "Revolutionizing Digital Legacies on Blockchain",
     description:
-      "Our platform offers a secure and transparent way to manage and transfer digital assets. Join our community to ensure your digital legacy is preserved!",
-    discordLink: "https://discord.com",
+      "Our platform offers an innovative and secure way to manage and pass on your digital legacy. Join us in creating a transparent system for future generations.",
+    discordLink: "https://discord.com/projectdiscord",
     images: [Placeholder1, Placeholder2, Placeholder3],
   },
 
@@ -29,24 +29,24 @@ export const config: Config = {
     title: "Our Team",
     members: [
       {
-        name: "Kunal",
-        role: "Blockchain Developer",
+        name: "Alex",
+        role: "Lead Developer",
         img: Placeholder1,
         socials: {
-          twitter: "https://twitter.com/kunaldhongade",
+          twitter: "https://twitter.com/alexhandle",
         },
       },
       {
-        name: "Soham",
-        role: "Marketing Specialist",
+        name: "Jordan",
+        role: "Marketing Lead",
         img: Placeholder2,
       },
       {
-        name: "Amrita",
-        role: "Community Manager",
+        name: "Taylor",
+        role: "Community Lead",
         img: Placeholder3,
         socials: {
-          twitter: "https://twitter.com",
+          twitter: "https://twitter.com/taylorhandle",
         },
       },
     ],
@@ -57,34 +57,34 @@ export const config: Config = {
 
     questions: [
       {
-        title: "How does the Digital Will system work?",
+        title: "How does the Legacy Vault system work?",
         description:
-          "Our system allows users to create and manage digital wills. You can specify beneficiaries for your digital assets, and our platform ensures secure and transparent transfer upon verification.",
+          "Our system allows users to create and manage digital legacies. You can designate beneficiaries, and the platform ensures secure and transparent transfer upon validation.",
       },
       {
-        title: "How do I create a digital will?",
-        description: `To create a digital will, follow these steps:
-        Navigate to the "Create Digital Will" section in the app.
-        Fill in the required details about your digital assets and beneficiaries.
+        title: "How do I create a digital legacy?",
+        description: `To create a digital legacy, follow these steps:
+        Navigate to the "Create Legacy" section in the app.
+        Fill in the necessary details about your assets and beneficiaries.
         Submit the form.
-        Your digital will be securely stored in our system.`,
+        Your legacy will be securely stored in the system.`,
       },
       {
-        title: "How do I manage my digital assets?",
+        title: "How do I manage my assets?",
         description:
-          "To manage your digital assets, navigate to the 'Manage Assets' section in the app. You can add, update, or remove assets and specify beneficiaries for each asset.",
+          "To manage your digital assets, go to the 'Manage Assets' section in the app. You can add, update, or remove assets and assign beneficiaries to each asset.",
       },
       {
-        title: "What happens to my digital assets after I pass away?",
-        description: `Upon verification of your passing, our system will initiate the transfer of your digital assets to the specified beneficiaries as per your digital will.`,
+        title: "What happens to my digital assets when I pass away?",
+        description: `Once validated, our system initiates the process of transferring your assets to the designated beneficiaries according to your legacy instructions.`,
       },
       {
-        title: "How can I update my digital will?",
-        description: `You can update your digital will at any time by navigating to the "Update Digital Will" section in the app. Make the necessary changes and submit the updated will.`,
+        title: "How can I update my digital legacy?",
+        description: `You can update your legacy anytime by visiting the "Update Legacy" section in the app. After making the changes, submit the updated legacy.`,
       },
       {
-        title: "Is my digital will secure?",
-        description: `Yes, our platform uses advanced security measures to ensure that your digital will and assets are protected. Only authorized personnel can access your information.`,
+        title: "Is my legacy secure?",
+        description: `Yes, we employ the latest security protocols to ensure that your digital legacy and assets remain safe. Only authorized personnel can access your information.`,
       },
     ],
   },
